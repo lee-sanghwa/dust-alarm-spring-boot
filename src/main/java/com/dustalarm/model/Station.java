@@ -10,24 +10,7 @@ import java.util.Set;
 
 @Entity
 @Table(name = "stations_station")
-@SqlResultSetMapping(
-    name = "nearResultMapping",
-    classes = {
-        @ConstructorResult(
-            targetClass = Station.class,
-            columns = {
-                @ColumnResult(name = "id", type = Integer.class),
-                @ColumnResult(name = "name", type = String.class),
-                @ColumnResult(name = "address", type = String.class),
-                @ColumnResult(name = "latitude", type = Double.class),
-                @ColumnResult(name = "longitude", type = Double.class),
-                @ColumnResult(name = "date_updated", type = LocalDateTime.class),
-                @ColumnResult(name = "distance", type = Double.class)
-            }
-        )
-    }
 
-)
 public class Station {
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
@@ -52,14 +35,6 @@ public class Station {
 
     @Transient
     private Double distance;
-
-    @OneToOne(
-        fetch = FetchType.LAZY,
-        cascade = CascadeType.ALL,
-        mappedBy = "station"
-    )
-    @JsonBackReference(value = "station-concentration")
-    private Concentration concentration;
 
     @OneToMany(
         fetch = FetchType.LAZY,
@@ -136,14 +111,6 @@ public class Station {
 
     public void setDistance(Double distance) {
         this.distance = distance;
-    }
-
-    public Concentration getConcentration() {
-        return concentration;
-    }
-
-    public void setConcentration(Concentration concentration) {
-        this.concentration = concentration;
     }
 
     public Set<Alarm> getAlarms() {
