@@ -32,23 +32,17 @@ public class Alarm {
     @Transient
     private String version;
 
-    @ManyToOne(
-        fetch = FetchType.LAZY
-    )
+    @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "alarm_config_id")
     @JsonManagedReference(value = "alarm-alarmConfig")
     private AlarmConfig alarmConfig;
 
-    @ManyToOne(
-        fetch = FetchType.LAZY
-    )
+    @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "station_id")
     @JsonManagedReference(value = "alarm-station")
     private Station station;
 
-    @ManyToOne(
-        fetch = FetchType.LAZY
-    )
+    @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "user_id")
     @JsonManagedReference(value = "alarm-user")
     private User user;

@@ -1,6 +1,6 @@
 package com.dustalarm.model;
 
-import com.fasterxml.jackson.annotation.JsonManagedReference;
+import com.fasterxml.jackson.annotation.JsonBackReference;
 import com.fasterxml.jackson.databind.annotation.JsonSerialize;
 import com.dustalarm.rest.JacksonCustomConcentrationSerializer;
 
@@ -30,18 +30,13 @@ public class Concentration {
     @Column(name = "data_time")
     private String dataTime;
 
-    @OneToOne(
-        fetch = FetchType.LAZY
-    )
-    @JoinColumn(name = "station_id", nullable = false)
-    @JsonManagedReference(value = "concentration-station")
+    @OneToOne(fetch = FetchType.LAZY)
+    @JoinColumn(name = "station_id")
     private Station station;
 
-    @ManyToOne(
-        fetch = FetchType.LAZY
-    )
+    @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "forecast_concentration_region_name")
-    @JsonManagedReference(value = "concentration-forecastConcentration")
+    @JsonBackReference(value = "concentration-forecastConcentration")
     private ForecastConcentration fc;
 
     public Concentration() {
@@ -75,9 +70,7 @@ public class Concentration {
         this.id = id;
     }
 
-    public Integer getFineDust() {
-        return id;
-    }
+    public Integer getFineDust() { return fineDust; }
 
     public void setFineDust(Integer fineDust) {
         this.fineDust = fineDust;
