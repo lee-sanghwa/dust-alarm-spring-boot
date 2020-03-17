@@ -1,27 +1,75 @@
-package com.dustalarm.rest;
+package com.dustalarm.common;
 
-import javax.servlet.http.HttpServletRequest;
 import java.util.Collection;
-import java.util.HashMap;
-import java.util.Map;
 
 public class DustAlarmCustomResponse {
+    private Integer pageSize;
     private Integer count;
     private String next;
     private String previous;
     private Collection<?> results;
 
-    public DustAlarmCustomResponse() {
+    public static class Builder {
+        private Integer pageSize = 10;
+        private Integer count;
+        private Collection<?> results;
+        private String next;
+        private String previous;
+
+        public Builder count(Integer count) {
+            this.count = count;
+            return this;
+        }
+
+        public Builder results(Collection<?> results) {
+            this.results = results;
+            return this;
+        }
+
+        public Builder pageSize(Integer pageSize) {
+            this.pageSize = pageSize;
+            return this;
+        }
+
+        public Builder setNextPreviousUrl(String requestUrl, Integer pageNo) {
+            String pageQuery = "?page=%d";
+            String nextPageQuery = String.format(pageQuery, pageNo + 1);
+            String previousPageQuery = String.format(pageQuery, pageNo - 1);
+
+            // Check Previous Url
+            if (pageNo == 1) {
+                this.previous = null;
+            } else {
+                this.previous = requestUrl + previousPageQuery;
+            }
+
+            // Check Next Url
+            if (pageNo * this.pageSize >= this.count) {
+                this.next = null;
+            } else {
+                this.next = requestUrl + nextPageQuery;
+            }
+            return this;
+        }
+
+        public DustAlarmCustomResponse Build() {
+            return new DustAlarmCustomResponse(this);
+        }
     }
 
-    public DustAlarmCustomResponse(Collection<?> totalResults, Collection<?> results) {
-        this.count = totalResults.size();
-        this.results = results;
+    public DustAlarmCustomResponse(Builder builder) {
+        this.pageSize = builder.pageSize;
+        this.count = builder.count;
+        this.next = builder.next;
+        this.previous = builder.previous;
+        this.results = builder.results;
     }
 
-    public Integer getCount() {
-        return count;
+    public Integer getPageSize() {
+        return pageSize;
     }
+
+    public Integer getCount() { return count; }
 
     public String getNext() {
         return next;
@@ -35,37 +83,6 @@ public class DustAlarmCustomResponse {
         return results;
     }
 
-    public void setNextPreviousUrl(HttpServletRequest request, Integer pageNo, Collection<?> totalObjects) {
-        Map<String, String> pagedLinkHashMap = this.getPagedLink(request, pageNo, totalObjects);
-        this.next = pagedLinkHashMap.get("next");
-        this.previous = pagedLinkHashMap.get("previous");
-    }
-
-    private Map<String, String> getPagedLink(HttpServletRequest request, Integer pageNo, Collection<?> totalObjects) {
-        Map<String, String> pagedLinkHashMap = new HashMap<>();
-        String requestURL = request.getRequestURL().toString();
-        int pageSize = 10;
-        String pageQuery = "?page=%d";
-
-        String nextPageQuery = String.format(pageQuery, pageNo + 1);
-        String previousPageQuery = String.format(pageQuery, pageNo - 1);
-
-
-        pagedLinkHashMap.put("next", requestURL + nextPageQuery);
-        pagedLinkHashMap.put("previous", requestURL + previousPageQuery);
-
-        if (pageNo == 1) {
-            pagedLinkHashMap.replace("previous", null);
-        } else {
-        }
-
-        if (pageNo * pageSize >= totalObjects.size()) {
-            pagedLinkHashMap.replace("next", null);
-        } else {
-        }
-
-        return pagedLinkHashMap;
-    }
 
 }
 
