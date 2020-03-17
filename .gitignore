@@ -161,3 +161,4 @@ buildNumber.properties
 .idea/
 src/main/java/com/dustalarm/security/DustAlarmKeys.java
 src/main/java/com/dustalarm/security/*.p8
+src/main/resources/application-mysql.properties
