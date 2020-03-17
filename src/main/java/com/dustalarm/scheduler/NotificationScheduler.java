@@ -47,7 +47,7 @@ public class NotificationScheduler {
         for (Alarm alarm : alarms) {
             String REGISTRATION_ID = alarm.getUser().getPushToken();
             String officialAddress = alarm.getOfficialAddress();
-            Concentration alarmConcentration = alarm.getStation().getConcentration();
+            Concentration alarmConcentration = dustAlarmService.findConcentrationByStationId(alarm.getStation().getId());
             Integer fineDust = alarmConcentration.getFineDust();
             Integer ultraFineDust = alarmConcentration.getUltraFineDust();
             String dataTime = alarmConcentration.getDataTime();

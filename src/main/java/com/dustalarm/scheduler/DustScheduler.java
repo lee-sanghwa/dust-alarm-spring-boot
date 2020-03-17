@@ -1,8 +1,8 @@
 package com.dustalarm.scheduler;
 
+import com.dustalarm.common.DustAlarmCommon;
 import com.dustalarm.security.DustAlarmKeys;
 import com.fasterxml.jackson.databind.JsonNode;
-import com.fasterxml.jackson.databind.ObjectMapper;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.dao.EmptyResultDataAccessException;
 import com.dustalarm.model.Concentration;
@@ -12,11 +12,7 @@ import com.dustalarm.service.DustAlarmService;
 import org.springframework.scheduling.annotation.Scheduled;
 import org.springframework.stereotype.Component;
 
-import java.io.BufferedReader;
 import java.io.IOException;
-import java.io.InputStreamReader;
-import java.net.HttpURLConnection;
-import java.net.URL;
 import java.util.HashMap;
 import java.util.Map;
 
@@ -46,7 +42,7 @@ public class DustScheduler {
         }
     }
 
-    public void updateDust(String sidoName) throws IOException, NullPointerException {
+    public void updateDust(String sidoName) throws IOException {
         String airKoreaDustWithQueryStringUrl =
             airKoreaDustUrl +
                 String.format("?serviceKey=%s", airKoreaServiceKey) +
@@ -56,24 +52,11 @@ public class DustScheduler {
                 String.format("&ver=%f", version) +
                 String.format("&_returnType=%s", returnType);
 
-        URL airKoreaDustWithQueryStringURL = new URL(airKoreaDustWithQueryStringUrl);
-        HttpURLConnection connection = (HttpURLConnection) airKoreaDustWithQueryStringURL.openConnection();
-        connection.setRequestProperty("Accept", "application/json");
-        connection.connect();
+        Map<String, String> headerConfig = new HashMap<>();
+        headerConfig.put("Accept", "application/json");
 
-        BufferedReader tempBr = new BufferedReader(new InputStreamReader(connection.getInputStream(), "UTF-8"));
-        StringBuilder sb = new StringBuilder();
-        String tempLine;
-        while ((tempLine = tempBr.readLine()) != null) {
-            sb.append(tempLine + "\n");
-        }
-
-        ObjectMapper mapper = new ObjectMapper();
-        JsonNode jsonNode = mapper.readTree(sb.toString());
-        tempBr.close();
-        connection.disconnect();
-
-        JsonNode jsonDustInfoList = jsonNode.get("list");
+        JsonNode responseBody = DustAlarmCommon.getResponseBodyFromUrl(airKoreaDustWithQueryStringUrl, headerConfig);
+        JsonNode jsonDustInfoList = responseBody.get("list");
 
         for (JsonNode jsonDustInfo : jsonDustInfoList) {
             Map<String, Integer> pm10DustMap = this.getValueAndGradeOfDust(jsonDustInfo, "pm10");
@@ -101,17 +84,14 @@ public class DustScheduler {
             try {
                 forecastConcentration = dustAlarmService.findFCByRegionName(sidoName);
             } catch (EmptyResultDataAccessException e) {
-                dustAlarmService.saveFC(
-                    new ForecastConcentration(
-                        sidoName,
-                        null,
-                        null,
-                        null,
-                        null
-                    )
-                );
+                forecastConcentration = new ForecastConcentration(
+                    sidoName,
+                    null,
+                    null,
+                    null,
+                    null);
 
-                forecastConcentration = dustAlarmService.findFCByRegionName(sidoName);
+                dustAlarmService.saveFC(forecastConcentration);
             }
 
             dustAlarmService.saveConcentration(
@@ -130,7 +110,7 @@ public class DustScheduler {
     }
 
     // dustType = "pm10" or "pm25"
-    private Map<String, Integer> getValueAndGradeOfDust(JsonNode jsonDustInfo, String dustType) throws NullPointerException {
+    private Map<String, Integer> getValueAndGradeOfDust(JsonNode jsonDustInfo, String dustType) {
         Map<String, Integer> dustValueAndGradeMap = new HashMap<>();
         String dustValueName = dustType + "Value";
         String dustGradeName = dustType + "Grade1h";

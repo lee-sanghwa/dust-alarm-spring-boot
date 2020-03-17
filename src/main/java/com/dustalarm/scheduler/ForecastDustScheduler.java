@@ -1,19 +1,15 @@
 package com.dustalarm.scheduler;
 
+import com.dustalarm.common.DustAlarmCommon;
 import com.dustalarm.security.DustAlarmKeys;
 import com.fasterxml.jackson.databind.JsonNode;
-import com.fasterxml.jackson.databind.ObjectMapper;
 import org.springframework.beans.factory.annotation.Autowired;
 import com.dustalarm.model.ForecastConcentration;
 import com.dustalarm.service.DustAlarmService;
 import org.springframework.scheduling.annotation.Scheduled;
 import org.springframework.stereotype.Component;
 
-import java.io.BufferedReader;
 import java.io.IOException;
-import java.io.InputStreamReader;
-import java.net.HttpURLConnection;
-import java.net.URL;
 import java.text.DateFormat;
 import java.text.SimpleDateFormat;
 import java.util.*;
@@ -40,25 +36,11 @@ public class ForecastDustScheduler {
                 String.format("&searchDate=%s", currentDate) +
                 String.format("&_returnType=%s", returnType);
 
-        URL airKoreaFCWithQueryStringURL = new URL(airKoreaFCWithQueryStringUrl);
-        HttpURLConnection connection = (HttpURLConnection) airKoreaFCWithQueryStringURL.openConnection();
-        connection.setRequestProperty("Accept", "application/json");
-        connection.connect();
+        Map<String, String> headerConfig = new HashMap<>();
+        headerConfig.put("Accept", "application/json");
 
-        BufferedReader tempBr = new BufferedReader(new InputStreamReader(connection.getInputStream(), "UTF-8"));
-        StringBuilder sb = new StringBuilder();
-        String tempLine;
-        while ((tempLine = tempBr.readLine()) != null) {
-            sb.append(tempLine + "\n");
-        }
-
-
-        ObjectMapper mapper = new ObjectMapper();
-        JsonNode jsonNode = mapper.readTree(sb.toString());
-        tempBr.close();
-        connection.disconnect();
-
-        JsonNode jsonFCInfoList = jsonNode.get("list");
+        JsonNode responseBody = DustAlarmCommon.getResponseBodyFromUrl(airKoreaFCWithQueryStringUrl, headerConfig);
+        JsonNode jsonFCInfoList = responseBody.get("list");
 
         Map<String, String> todayPM10Map = this.getTodayFC(jsonFCInfoList, "PM10", currentDate);
         Map<String, String> todayPM25Map = this.getTodayFC(jsonFCInfoList, "PM25", currentDate);

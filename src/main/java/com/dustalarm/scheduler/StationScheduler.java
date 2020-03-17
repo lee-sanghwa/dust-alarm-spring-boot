@@ -1,19 +1,15 @@
 package com.dustalarm.scheduler;
 
+import com.dustalarm.common.DustAlarmCommon;
 import com.dustalarm.security.DustAlarmKeys;
 import com.fasterxml.jackson.databind.JsonNode;
-import com.fasterxml.jackson.databind.ObjectMapper;
 import org.springframework.beans.factory.annotation.Autowired;
 import com.dustalarm.model.Station;
 import com.dustalarm.service.DustAlarmService;
 import org.springframework.scheduling.annotation.Scheduled;
 import org.springframework.stereotype.Component;
 
-import java.io.BufferedReader;
 import java.io.IOException;
-import java.io.InputStreamReader;
-import java.net.HttpURLConnection;
-import java.net.URL;
 import java.util.HashMap;
 import java.util.Map;
 
@@ -43,24 +39,12 @@ public class StationScheduler {
                 String.format("&pageNo=%d", pageNo) +
                 String.format("&_returnType=%s", returnType);
 
-        URL airKoreaStationWithQueryStringURL = new URL(airKoreaStationWithQueryStringUrl);
-        HttpURLConnection connection = (HttpURLConnection) airKoreaStationWithQueryStringURL.openConnection();
-        connection.setRequestProperty("Accept", "application/json");
-        connection.connect();
+        Map<String, String> headerConfig = new HashMap<>();
+        headerConfig.put("Accept", "application/json");
 
-        BufferedReader tempBr = new BufferedReader(new InputStreamReader(connection.getInputStream(), "UTF-8"));
-        StringBuilder sb = new StringBuilder();
-        String tempLine;
-        while ((tempLine = tempBr.readLine()) != null) {
-            sb.append(tempLine + "\n");
-        }
+        JsonNode responseBody = DustAlarmCommon.getResponseBodyFromUrl(airKoreaStationWithQueryStringUrl, headerConfig);
 
-        ObjectMapper mapper = new ObjectMapper();
-        JsonNode jsonNode = mapper.readTree(sb.toString());
-        tempBr.close();
-        connection.disconnect();
-
-        JsonNode jsonStationInfoList = jsonNode.get("list");
+        JsonNode jsonStationInfoList = responseBody.get("list");
 
         for (JsonNode jsonStationInfo : jsonStationInfoList) {
             Map<String, Double> stationLocationMap = this.getLocationOfStation(jsonStationInfo);
