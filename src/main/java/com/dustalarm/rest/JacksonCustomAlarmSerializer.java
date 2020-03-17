@@ -8,6 +8,7 @@ import com.dustalarm.model.Alarm;
 import java.io.IOException;
 
 public class JacksonCustomAlarmSerializer extends StdSerializer<Alarm> {
+    /* For preventing 'Unsatisfied dependency expressed through constructor parameter 0' */
     public JacksonCustomAlarmSerializer() {
         this(null);
     }
@@ -31,8 +32,11 @@ public class JacksonCustomAlarmSerializer extends StdSerializer<Alarm> {
         if ("2.0.0".equals(alarm.getVersion())) {
             jgen.writeObjectField("station", alarm.getStation());
         } else {
-            jgen.writeNumberField("station", alarm.getStation().getId());
-
+            if (alarm.getStation() == null) {
+                jgen.writeNullField("station");
+            } else {
+                jgen.writeNumberField("station", alarm.getStation().getId());
+            }
         }
         jgen.writeBooleanField("activated", alarm.getActivated());
         jgen.writeStringField("official_address", alarm.getOfficialAddress());

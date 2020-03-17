@@ -1,5 +1,7 @@
 package com.dustalarm.rest;
 
+import com.dustalarm.common.DustAlarmCommon;
+import com.dustalarm.common.DustAlarmCustomResponse;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpHeaders;
 import org.springframework.http.HttpStatus;
@@ -17,22 +19,14 @@ import java.util.ArrayList;
 import java.util.Collection;
 import java.util.List;
 
+import static com.dustalarm.common.DustAlarmCommon.setUserAgent2Alarms;
+
 @RestController
 @RequestMapping("/api/alarms")
 public class AlarmRestController {
 
     @Autowired
     private DustAlarmService dustAlarmService;
-
-    @RequestMapping(value = "/{alarmId}", method = RequestMethod.GET, produces = MediaType.APPLICATION_JSON_UTF8_VALUE)
-    public ResponseEntity<Alarm> getAlarm(
-        @PathVariable(value = "alarmId", required = false) int alarmId,
-        @RequestHeader(value = "User-Agent", required = false) String userAgent
-    ) {
-        Alarm alarm = dustAlarmService.findAlarmById(alarmId);
-        alarm = DustAlarmCommon.setUserAgent(alarm, userAgent);
-        return new ResponseEntity<Alarm>(alarm, HttpStatus.OK);
-    }
 
     @RequestMapping(value = "", method = RequestMethod.GET, produces = MediaType.APPLICATION_JSON_UTF8_VALUE)
     public ResponseEntity<?> getAlarms(
@@ -42,28 +36,34 @@ public class AlarmRestController {
         @RequestHeader(value = "User-Agent", required = false) String userAgent
     ) {
         if (userId == null) {
-            Collection<Alarm> totalAlarms = dustAlarmService.findAllAlarms();
+            /* Return All of Alarms of Database */
+
             Collection<Alarm> alarms = dustAlarmService.findAllAlarms(pageNo);
+            setUserAgent2Alarms(alarms, userAgent);
 
-            alarms = DustAlarmCommon.setUserAgent2Alarms(alarms, userAgent);
-
-            DustAlarmCustomResponse response = new DustAlarmCustomResponse(totalAlarms, alarms);
-            response.setNextPreviousUrl(request, pageNo, totalAlarms);
-
-            return new ResponseEntity<>(response, HttpStatus.OK);
+            return new ResponseEntity<>(new DustAlarmCustomResponse.Builder()
+                .count(this.dustAlarmService.findCountAlarms())
+                .results(alarms)
+                .setNextPreviousUrl(request.getRequestURI(), pageNo)
+                .Build(), HttpStatus.OK);
         } else {
-            Collection<Alarm> alarms = dustAlarmService.findAlarmByUserId(userId.intValue());
 
-            alarms = DustAlarmCommon.setUserAgent2Alarms(alarms, userAgent);
+            /* Return All of Alarms Of Specific User */
+            Collection<Alarm> alarms = dustAlarmService.findAlarmByUserId(userId);
+            setUserAgent2Alarms(alarms, userAgent);
+
             if (!"2.0.0".equals(userAgent)) {
+
+                /* Return All of Alarms Of Specific User With Version 1.0.0 */
                 alarms = this.setAlarms4Ver1(new ArrayList<>(alarms), userId);
             } else {
             }
 
-            DustAlarmCustomResponse response = new DustAlarmCustomResponse(alarms, alarms);
-            response.setNextPreviousUrl(request, pageNo, alarms);
-
-            return new ResponseEntity<>(response, HttpStatus.OK);
+            return new ResponseEntity<>(new DustAlarmCustomResponse.Builder()
+                .count(alarms.size())
+                .results(alarms)
+                .setNextPreviousUrl(request.getRequestURI(), pageNo)
+                .Build(), HttpStatus.OK);
         }
     }
 
@@ -87,6 +87,17 @@ public class AlarmRestController {
             return new ResponseEntity<Alarm>(alarm, headers, HttpStatus.CREATED);
         }
     }
+
+    @RequestMapping(value = "/{alarmId}", method = RequestMethod.GET, produces = MediaType.APPLICATION_JSON_UTF8_VALUE)
+    public ResponseEntity<Alarm> getAlarm(
+        @PathVariable(value = "alarmId", required = false) int alarmId,
+        @RequestHeader(value = "User-Agent", required = false) String userAgent
+    ) {
+        Alarm alarm = dustAlarmService.findAlarmById(alarmId);
+        alarm = DustAlarmCommon.setUserAgent(alarm, userAgent);
+        return new ResponseEntity<Alarm>(alarm, HttpStatus.OK);
+    }
+
 
     @RequestMapping(value = "/{alarmId}", method = RequestMethod.PUT, produces = MediaType.APPLICATION_JSON_UTF8_VALUE)
     public ResponseEntity<?> updateConcentration(
@@ -124,15 +135,19 @@ public class AlarmRestController {
 
     private Collection<Alarm> setAlarms4Ver1(List<Alarm> alarms, Integer userId) {
         User user = dustAlarmService.findUserById(userId);
-        List<Alarm> resetAlarms = new ArrayList<Alarm>();
+        List<Alarm> resetAlarms = new ArrayList<>();
 
         for (int alarmConfigId = 1; alarmConfigId < 5; alarmConfigId++) {
-            Alarm tempAlarm = new Alarm(0, "00:00", false, null, null, null, null, null);
+            Alarm tempAlarm = new Alarm(
+                0,
+                "00:00",
+                false,
+                null,
+                null,
+                dustAlarmService.findAlarmConfigById(alarmConfigId),
+                null,
+                user);
 
-            AlarmConfig alarmConfig = dustAlarmService.findAlarmConfigById(alarmConfigId);
-
-            tempAlarm.setUser(user);
-            tempAlarm.setAlarmConfig(alarmConfig);
             resetAlarms.add(tempAlarm);
         }
 

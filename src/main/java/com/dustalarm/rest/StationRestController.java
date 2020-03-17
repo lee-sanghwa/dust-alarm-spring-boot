@@ -1,5 +1,6 @@
 package com.dustalarm.rest;
 
+import com.dustalarm.common.DustAlarmCustomResponse;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpHeaders;
 import org.springframework.http.HttpStatus;
@@ -22,16 +23,6 @@ public class StationRestController {
     @Autowired
     private DustAlarmService dustAlarmService;
 
-    @RequestMapping(value = "/{stationId}", method = RequestMethod.GET, produces = MediaType.APPLICATION_JSON_UTF8_VALUE)
-    public ResponseEntity<Station> getStation(@PathVariable("stationId") int stationId) {
-        Station station = this.dustAlarmService.findStationById(stationId);
-        if (station == null) {
-            return new ResponseEntity<Station>(HttpStatus.NOT_FOUND);
-        } else {
-            return new ResponseEntity<Station>(station, HttpStatus.OK);
-        }
-    }
-
     @RequestMapping(value = "", method = RequestMethod.GET, produces = MediaType.APPLICATION_JSON_UTF8_VALUE)
     public ResponseEntity<?> handleStationRequest(
         HttpServletRequest request,
@@ -41,24 +32,24 @@ public class StationRestController {
         @RequestParam(value = "name", required = false) String name
     ) {
         if (latitude != null && longitude != null && name == null) {
-            Station station = null;
-            station = this.dustAlarmService.findStationByLocation(latitude, longitude);
-            return new ResponseEntity<Station>(station, HttpStatus.OK);
+            Station station = this.dustAlarmService.findStationByLocation(latitude, longitude);
+            return new ResponseEntity<>(station, HttpStatus.OK);
         } else if (latitude == null && longitude == null && name != null) {
             name = '%' + name + '%';
             Collection<Station> stations = this.dustAlarmService.findStationByNameLike(name);
             stations.addAll(this.dustAlarmService.findStationByAddressLike(name));
-            return new ResponseEntity<Collection<Station>>(stations, HttpStatus.OK);
+            return new ResponseEntity<>(stations, HttpStatus.OK);
         } else if (latitude == null && longitude == null && name == null) {
-            Collection<Station> totalStations = this.dustAlarmService.findAllStations();
             Collection<Station> stations = this.dustAlarmService.findAllStations(pageNo);
             if (stations.isEmpty()) {
                 return new ResponseEntity<Collection<Station>>(HttpStatus.NOT_FOUND);
             } else {
-                DustAlarmCustomResponse response = new DustAlarmCustomResponse(totalStations, stations);
-                response.setNextPreviousUrl(request, pageNo, totalStations);
 
-                return new ResponseEntity<>(response, HttpStatus.OK);
+                return new ResponseEntity<>(new DustAlarmCustomResponse.Builder()
+                    .count(this.dustAlarmService.findCountStations())
+                    .results(stations)
+                    .setNextPreviousUrl(request.getRequestURI(), pageNo)
+                    .Build(), HttpStatus.OK);
             }
         } else {
             return new ResponseEntity<Collection<Station>>(HttpStatus.BAD_REQUEST);
@@ -79,6 +70,18 @@ public class StationRestController {
             this.dustAlarmService.saveStation(station);
             headers.setLocation(ucBuilder.path("api/stations/{id}").buildAndExpand(station.getId()).toUri());
             return new ResponseEntity<Station>(station, headers, HttpStatus.CREATED);
+        }
+    }
+
+    @RequestMapping(value = "/{stationId}", method = RequestMethod.GET, produces = MediaType.APPLICATION_JSON_UTF8_VALUE)
+    public ResponseEntity<Station> getStation(
+        @PathVariable("stationId") int stationId
+    ) {
+        Station station = this.dustAlarmService.findStationById(stationId);
+        if (station == null) {
+            return new ResponseEntity<>(HttpStatus.NOT_FOUND);
+        } else {
+            return new ResponseEntity<>(station, HttpStatus.OK);
         }
     }
 

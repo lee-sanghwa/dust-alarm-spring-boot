@@ -1,5 +1,6 @@
 package com.dustalarm.rest;
 
+import com.dustalarm.common.DustAlarmCustomResponse;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpHeaders;
 import org.springframework.http.HttpStatus;
@@ -13,7 +14,6 @@ import org.springframework.web.util.UriComponentsBuilder;
 
 import javax.servlet.http.HttpServletRequest;
 import javax.validation.Valid;
-import java.util.Collection;
 
 @RestController
 @RequestMapping("/api/concentrations")
@@ -22,15 +22,6 @@ public class ConcentrationRestController {
     @Autowired
     DustAlarmService dustAlarmService;
 
-    @RequestMapping(value = "/{concentrationId}", method = RequestMethod.GET, produces = MediaType.APPLICATION_JSON_UTF8_VALUE)
-    public ResponseEntity<Concentration> findById(@PathVariable(name = "concentrationId") int concentrationId) {
-        Concentration concentration = dustAlarmService.findConcentrationById(concentrationId);
-        if (concentration == null) {
-            return new ResponseEntity<>(HttpStatus.NOT_FOUND);
-        }
-        return new ResponseEntity<Concentration>(concentration, HttpStatus.OK);
-    }
-
     @RequestMapping(value = "", method = RequestMethod.GET, produces = MediaType.APPLICATION_JSON_UTF8_VALUE)
     public ResponseEntity<?> handleConcentrationRequest(
         HttpServletRequest request,
@@ -38,14 +29,12 @@ public class ConcentrationRestController {
         @RequestParam(name = "page", defaultValue = "1") Integer pageNo
     ) {
         if (stationId == null) {
-            Collection<Concentration> totalConcentrations = dustAlarmService.findAllConcentrations();
-            Collection<Concentration> concentrations = dustAlarmService.findAllConcentrations(pageNo);
 
-
-            DustAlarmCustomResponse response = new DustAlarmCustomResponse(totalConcentrations, concentrations);
-            response.setNextPreviousUrl(request, pageNo, totalConcentrations);
-
-            return new ResponseEntity<>(response, HttpStatus.OK);
+            return new ResponseEntity<>(new DustAlarmCustomResponse.Builder()
+                .count(dustAlarmService.findCountConcentrations())
+                .results(dustAlarmService.findAllConcentrations(pageNo))
+                .setNextPreviousUrl(request.getRequestURI(), pageNo)
+                .Build(), HttpStatus.OK);
         } else {
             Concentration concentration = dustAlarmService.findConcentrationByStationId(stationId.intValue());
             if (concentration == null) {
@@ -73,6 +62,15 @@ public class ConcentrationRestController {
             headers.setLocation(ucBuilder.path("api/stations/{id}").buildAndExpand(concentration.getId()).toUri());
             return new ResponseEntity<Concentration>(concentration, headers, HttpStatus.CREATED);
         }
+    }
+
+    @RequestMapping(value = "/{concentrationId}", method = RequestMethod.GET, produces = MediaType.APPLICATION_JSON_UTF8_VALUE)
+    public ResponseEntity<Concentration> findById(@PathVariable(name = "concentrationId") int concentrationId) {
+        Concentration concentration = dustAlarmService.findConcentrationById(concentrationId);
+        if (concentration == null) {
+            return new ResponseEntity<>(HttpStatus.NOT_FOUND);
+        }
+        return new ResponseEntity<Concentration>(concentration, HttpStatus.OK);
     }
 
     @RequestMapping(value = "/{concentrationId}", method = RequestMethod.PUT, produces = MediaType.APPLICATION_JSON_UTF8_VALUE)

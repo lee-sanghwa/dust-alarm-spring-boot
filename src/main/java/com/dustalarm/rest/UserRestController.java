@@ -1,5 +1,6 @@
 package com.dustalarm.rest;
 
+import com.dustalarm.common.DustAlarmCustomResponse;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpHeaders;
 import org.springframework.http.HttpStatus;
@@ -15,22 +16,14 @@ import javax.servlet.http.HttpServletRequest;
 import javax.validation.Valid;
 import java.util.Collection;
 
+import static com.dustalarm.common.DustAlarmCommon.setUserAgent2Users;
+
 @RestController
 @RequestMapping("/api/users")
 public class UserRestController {
 
     @Autowired
     private DustAlarmService dustAlarmService;
-
-    @RequestMapping(value = "/{userId}", method = RequestMethod.GET, produces = MediaType.APPLICATION_JSON_UTF8_VALUE)
-    public ResponseEntity<User> getUser(@PathVariable("userId") int userId) {
-        User user = this.dustAlarmService.findUserById(userId);
-        if (user == null) {
-            return new ResponseEntity<>(HttpStatus.NOT_FOUND);
-        } else {
-            return new ResponseEntity<User>(user, HttpStatus.OK);
-        }
-    }
 
     @RequestMapping(value = "", method = RequestMethod.GET, produces = MediaType.APPLICATION_JSON_UTF8_VALUE)
     public ResponseEntity<?> handleUserRequest(
@@ -43,18 +36,18 @@ public class UserRestController {
             User user = this.dustAlarmService.findUserByUuid(uuid);
             return new ResponseEntity<User>(user, HttpStatus.OK);
         } else {
-            Collection<User> totalUsers = this.dustAlarmService.findAllUsers();
             Collection<User> users = this.dustAlarmService.findAllUsers(pageNo);
 
-            users = DustAlarmCommon.setUserAgent2Users(users, userAgent);
-
-            DustAlarmCustomResponse response = new DustAlarmCustomResponse(totalUsers, users);
-            response.setNextPreviousUrl(request, pageNo, totalUsers);
+            setUserAgent2Users(users, userAgent);
 
             if (users.isEmpty()) {
                 return new ResponseEntity<>(HttpStatus.NOT_FOUND);
             } else {
-                return new ResponseEntity<>(response, HttpStatus.OK);
+                return new ResponseEntity<>(new DustAlarmCustomResponse.Builder()
+                    .count(this.dustAlarmService.findCountUsers())
+                    .results(users)
+                    .setNextPreviousUrl(request.getRequestURI(), pageNo)
+                    .Build(), HttpStatus.OK);
             }
         }
     }
@@ -73,6 +66,16 @@ public class UserRestController {
             this.dustAlarmService.saveUser(user);
             headers.setLocation(ucBuilder.path("api/users/{id}").buildAndExpand(user.getId()).toUri());
             return new ResponseEntity<User>(user, headers, HttpStatus.CREATED);
+        }
+    }
+
+    @RequestMapping(value = "/{userId}", method = RequestMethod.GET, produces = MediaType.APPLICATION_JSON_UTF8_VALUE)
+    public ResponseEntity<User> getUser(@PathVariable("userId") int userId) {
+        User user = this.dustAlarmService.findUserById(userId);
+        if (user == null) {
+            return new ResponseEntity<>(HttpStatus.NOT_FOUND);
+        } else {
+            return new ResponseEntity<User>(user, HttpStatus.OK);
         }
     }
 

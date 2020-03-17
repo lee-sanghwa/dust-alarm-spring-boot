@@ -2,7 +2,6 @@ package com.dustalarm.rest;
 
 import com.dustalarm.security.DustAlarmKeys;
 import com.fasterxml.jackson.databind.JsonNode;
-import com.fasterxml.jackson.databind.ObjectMapper;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.MediaType;
@@ -15,17 +14,11 @@ import org.springframework.web.bind.annotation.RequestMethod;
 import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
 
-import java.io.BufferedReader;
 import java.io.IOException;
-import java.io.InputStreamReader;
-import java.io.UnsupportedEncodingException;
-import java.net.HttpURLConnection;
-import java.net.MalformedURLException;
-import java.net.URL;
 import java.net.URLEncoder;
-import java.util.ArrayList;
-import java.util.Collection;
-import java.util.Collections;
+import java.util.*;
+
+import static com.dustalarm.common.DustAlarmCommon.getResponseBodyFromUrl;
 
 @RestController
 @RequestMapping("/api/locations")
@@ -35,7 +28,6 @@ public class LocationRestController {
     private DustAlarmService dustAlarmService;
     private String kakaoGeocodingAddressUrl = "https://dapi.kakao.com/v2/local/search/address.json";
     private String kakaoGeocodingCoordUrl = "https://dapi.kakao.com/v2/local/geo/coord2regioncode.json";
-    private String kakaoGeocodingKey = DustAlarmKeys.kakaoGeocodingKey;
 
     @RequestMapping(value = "", method = RequestMethod.GET, produces = MediaType.APPLICATION_JSON_UTF8_VALUE)
     public ResponseEntity<?> getLocationResult(
@@ -43,33 +35,22 @@ public class LocationRestController {
         @RequestParam(value = "lon", required = false) Double longitude,
         @RequestParam(value = "name", required = false) String name
     ) {
+
+        Map<String, String> headerConfig = new HashMap<>();
+        headerConfig.put("Accept", "application/json");
+        headerConfig.put("Authorization", DustAlarmKeys.kakaoGeocodingKey);
+
         if (latitude != null && longitude != null && name == null) {
+            /* 위도, 경도가 주어졌을 때, 공식적인 주소를  */
+
             JsonNode jsonNodeForCoord = null;
             try {
                 String kakaoGeocodinCoordWithLocationUrlString = this.kakaoGeocodingCoordUrl + String.format("?x=%s&y=%s", longitude, latitude);
-                URL kakaoGeocodinCoordWithLocationURL = new URL(kakaoGeocodinCoordWithLocationUrlString);
-                try {
-                    HttpURLConnection connection = (HttpURLConnection) kakaoGeocodinCoordWithLocationURL.openConnection();
-                    connection.setRequestProperty("Authorization", this.kakaoGeocodingKey);
-                    connection.setRequestProperty("Accept", "application/json");
-                    connection.connect();
 
-                    BufferedReader tempBr = new BufferedReader(new InputStreamReader(connection.getInputStream(), "UTF-8"));
-                    StringBuilder sb = new StringBuilder();
-                    String tempLine;
-                    while ((tempLine = tempBr.readLine()) != null) {
-                        sb.append(tempLine + "\n");
-                    }
+                jsonNodeForCoord = getResponseBodyFromUrl(kakaoGeocodinCoordWithLocationUrlString, headerConfig);
 
-                    ObjectMapper mapper = new ObjectMapper();
-                    jsonNodeForCoord = mapper.readTree(sb.toString());
-                    tempBr.close();
-                    connection.disconnect();
-                } catch (IOException e) {
-                    System.out.println("IOException : " + e);
-                }
-            } catch (MalformedURLException e) {
-                System.out.println("MalformedURLException : " + e);
+            } catch (IOException e) {
+                System.out.println("IOException : " + e);
             }
 
             JsonNode jsonRegionList = jsonNodeForCoord.get("documents");
@@ -86,34 +67,16 @@ public class LocationRestController {
                 return new ResponseEntity<KakaoStation>(stations.get(0), HttpStatus.OK);
             }
         } else if (latitude == null && longitude == null && name != null) {
+            /* 공식적인 주소가 주어졌을 때, */
+
             JsonNode jsonNodeForAddress = null;
 
             try {
                 String kakaoGeocodingAddressWithQueryUrlString = this.kakaoGeocodingAddressUrl + String.format("?query=%s", URLEncoder.encode(name, "UTF-8"));
-                URL kakaoGeocodingAddressWithQueryURL = new URL(kakaoGeocodingAddressWithQueryUrlString);
-                try {
-                    HttpURLConnection connection = (HttpURLConnection) kakaoGeocodingAddressWithQueryURL.openConnection();
-                    connection.setRequestProperty("Authorization", this.kakaoGeocodingKey);
-                    connection.setRequestProperty("Accept", "application/json");
-                    connection.connect();
+                jsonNodeForAddress = getResponseBodyFromUrl(kakaoGeocodingAddressWithQueryUrlString, headerConfig);
 
-                    BufferedReader tempBr = new BufferedReader(new InputStreamReader(connection.getInputStream(), "UTF-8"));
-                    StringBuilder sb = new StringBuilder();
-                    String tempLine;
-                    while ((tempLine = tempBr.readLine()) != null) {
-                        sb.append(tempLine + "\n");
-                    }
-
-                    ObjectMapper mapper = new ObjectMapper();
-                    jsonNodeForAddress = mapper.readTree(sb.toString());
-
-                    tempBr.close();
-                    connection.disconnect();
-                } catch (IOException e) {
-                    System.out.println("IOException : " + e);
-                }
-            } catch (MalformedURLException | UnsupportedEncodingException e) {
-                System.out.println("MalformedURLException | UnsupportedEncodingException : " + e);
+            } catch (IOException e) {
+                System.out.println("IOException : " + e);
             }
 
             JsonNode jsonAddressList = jsonNodeForAddress.get("documents");
