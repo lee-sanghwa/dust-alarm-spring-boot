@@ -1,19 +1,20 @@
 package com.dustalarm.repository;
 
-import org.springframework.dao.DataAccessException;
 import com.dustalarm.model.User;
 
 import java.util.Collection;
 
 public interface UserRepository {
-    User findById(int id) throws DataAccessException;
+    User findById(int id);
 
-    User findByUuid(String uuid) throws DataAccessException;
+    User findByUuid(String uuid);
 
-    void save(User user) throws DataAccessException;
+    void save(User user);
 
-    Collection<User> findAll() throws DataAccessException;
+    Collection<User> findAll();
 
-    Collection<User> findAll(Integer pageNo) throws DataAccessException;
+    Collection<User> findAll(Integer pageNo);
+
+    Integer findCount();
 
 }

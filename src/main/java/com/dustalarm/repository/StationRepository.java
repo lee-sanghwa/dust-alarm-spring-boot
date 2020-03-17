@@ -1,24 +1,25 @@
 package com.dustalarm.repository;
 
-import org.springframework.dao.DataAccessException;
 import com.dustalarm.model.Station;
 
 import java.util.Collection;
 
 public interface StationRepository {
-    Station findById(int id) throws DataAccessException;
+    Station findById(int id);
 
-    Station findByLocation(Double latitude, Double longitude) throws DataAccessException;
+    Station findByLocation(Double latitude, Double longitude);
 
-    Station findByName(String name) throws DataAccessException;
+    Station findByName(String name);
 
-    Collection<Station> findByNameLike(String name) throws DataAccessException;
+    Collection<Station> findByNameLike(String name);
 
-    Collection<Station> findByAddressLike(String address) throws DataAccessException;
+    Collection<Station> findByAddressLike(String address);
 
-    void save(Station station) throws DataAccessException;
+    void save(Station station);
 
-    Collection<Station> findAll() throws DataAccessException;
+    Collection<Station> findAll();
 
-    Collection<Station> findAll(Integer pageNo) throws DataAccessException;
+    Collection<Station> findAll(Integer pageNo);
+
+    Integer findCount();
 }

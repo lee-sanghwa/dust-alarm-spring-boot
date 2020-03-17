@@ -1,7 +1,6 @@
 package com.dustalarm.repository.jpa;
 
 import org.springframework.context.annotation.Profile;
-import org.springframework.dao.DataAccessException;
 import com.dustalarm.model.Concentration;
 import com.dustalarm.repository.ConcentrationRepository;
 import org.springframework.stereotype.Repository;
@@ -18,19 +17,19 @@ public class JpaConcentrationRepositoryImpl implements ConcentrationRepository {
     @PersistenceContext
     private EntityManager em;
 
-    public Concentration findById(int id) throws DataAccessException {
+    public Concentration findById(int id) {
         Query query = this.em.createQuery("SELECT concentration FROM Concentration concentration WHERE concentration.id = :id");
         query.setParameter("id", id);
         return (Concentration) query.getSingleResult();
     }
 
-    public Concentration findByStationId(int stationId) throws DataAccessException {
+    public Concentration findByStationId(int stationId) {
         Query query = this.em.createQuery("SELECT concentration FROM Concentration concentration WHERE concentration.station.id = :stationId");
         query.setParameter("stationId", stationId);
         return (Concentration) query.getSingleResult();
     }
 
-    public void save(Concentration concentration) throws DataAccessException {
+    public void save(Concentration concentration) {
         if (concentration.getId() == null) {
             this.em.persist(concentration);
         } else {
@@ -38,16 +37,21 @@ public class JpaConcentrationRepositoryImpl implements ConcentrationRepository {
         }
     }
 
-    public Collection<Concentration> findAll() throws DataAccessException {
+    public Collection<Concentration> findAll() {
         Query query = this.em.createQuery("SELECT concentration FROM Concentration concentration");
         return query.getResultList();
     }
 
-    public Collection<Concentration> findAll(Integer pageNo) throws DataAccessException {
+    public Collection<Concentration> findAll(Integer pageNo) {
         int pageSize = 10;
         Query query = this.em.createQuery("SELECT concentration FROM Concentration concentration");
         query.setFirstResult((pageNo.intValue() - 1) * pageSize);
         query.setMaxResults((pageNo.intValue()) * pageSize);
         return query.getResultList();
+    }
+
+    public Integer findCount() {
+        Query query = this.em.createQuery("SELECT COUNT(concentration.id) FROM Concentration concentration");
+        return ((Long) query.getSingleResult()).intValue();
     }
 }

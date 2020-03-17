@@ -1,7 +1,6 @@
 package com.dustalarm.repository.jpa;
 
 import org.springframework.context.annotation.Profile;
-import org.springframework.dao.DataAccessException;
 import com.dustalarm.model.Alarm;
 import com.dustalarm.repository.AlarmRepository;
 import org.springframework.stereotype.Repository;
@@ -18,25 +17,25 @@ public class JpaAlarmRepositoryImpl implements AlarmRepository {
     @PersistenceContext
     private EntityManager em;
 
-    public Alarm findById(int id) throws DataAccessException {
-        Query query = this.em.createQuery("SELECT alarm FROM Alarm alarm JOIN FETCH alarm.station WHERE alarm.id = :id");
+    public Alarm findById(int id) {
+        Query query = this.em.createQuery("SELECT alarm FROM Alarm alarm WHERE alarm.id = :id");
         query.setParameter("id", id);
         return (Alarm) query.getSingleResult();
     }
 
-    public Collection<Alarm> findByUserId(int userId) throws DataAccessException {
-        Query query = this.em.createQuery("SELECT alarm FROM Alarm alarm JOIN FETCH alarm.station WHERE alarm.user.id = :userId ORDER BY alarm.alarmConfig.id");
+    public Collection<Alarm> findByUserId(int userId) {
+        Query query = this.em.createQuery("SELECT alarm FROM Alarm alarm WHERE alarm.user.id = :userId ORDER BY alarm.alarmConfig.id");
         query.setParameter("userId", userId);
         return query.getResultList();
     }
 
-    public Collection<Alarm> findByTimeActivated(String time) throws DataAccessException {
-        Query query = this.em.createQuery("SELECT alarm FROM Alarm alarm JOIN FETCH alarm.station WHERE alarm.time = :time AND alarm.activated = true");
+    public Collection<Alarm> findByTimeActivated(String time) {
+        Query query = this.em.createQuery("SELECT alarm FROM Alarm alarm WHERE alarm.time = :time AND alarm.activated = true");
         query.setParameter("time", time);
         return query.getResultList();
     }
 
-    public void save(Alarm alarm) throws DataAccessException {
+    public void save(Alarm alarm) {
         if (alarm.getId() == null) {
             this.em.persist(alarm);
         } else {
@@ -44,16 +43,21 @@ public class JpaAlarmRepositoryImpl implements AlarmRepository {
         }
     }
 
-    public Collection<Alarm> findAll() throws DataAccessException {
-        Query query = this.em.createQuery("SELECT alarm FROM Alarm alarm JOIN FETCH alarm.station");
+    public Collection<Alarm> findAll() {
+        Query query = this.em.createQuery("SELECT alarm FROM Alarm alarm");
         return query.getResultList();
     }
 
-    public Collection<Alarm> findAll(Integer pageNo) throws DataAccessException {
+    public Collection<Alarm> findAll(Integer pageNo) {
         int pageSize = 10;
-        Query query = this.em.createQuery("SELECT alarm FROM Alarm alarm JOIN FETCH alarm.station");
+        Query query = this.em.createQuery("SELECT alarm FROM Alarm alarm");
         query.setFirstResult((pageNo.intValue() - 1) * pageSize);
         query.setMaxResults((pageNo.intValue()) * pageSize);
         return query.getResultList();
+    }
+
+    public Integer findCount() {
+        Query query = this.em.createQuery("SELECT COUNT(alarm.id) FROM Alarm alarm");
+        return ((Long) query.getSingleResult()).intValue();
     }
 }

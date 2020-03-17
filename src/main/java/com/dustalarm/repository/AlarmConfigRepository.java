@@ -1,16 +1,17 @@
 package com.dustalarm.repository;
 
-import org.springframework.dao.DataAccessException;
 import com.dustalarm.model.AlarmConfig;
 
 import java.util.Collection;
 
 public interface AlarmConfigRepository {
-    AlarmConfig findById(int id) throws DataAccessException;
+    AlarmConfig findById(int id);
 
-    Collection<AlarmConfig> findAll() throws DataAccessException;
+    Collection<AlarmConfig> findAll();
 
-    Collection<AlarmConfig> findAll(Integer pageNo) throws DataAccessException;
+    Collection<AlarmConfig> findAll(Integer pageNo);
 
-    void save(AlarmConfig alarmConfig) throws DataAccessException;
+    void save(AlarmConfig alarmConfig);
+
+    Integer findCount();
 }

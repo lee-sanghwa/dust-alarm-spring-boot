@@ -69,4 +69,9 @@ public class JpaStationRepositoryImpl implements StationRepository {
         query.setMaxResults((pageNo.intValue()) * pageSize);
         return query.getResultList();
     }
+
+    public Integer findCount() {
+        Query query = this.em.createQuery("SELECT COUNT(station.id) FROM Station station");
+        return ((Long) query.getSingleResult()).intValue();
+    }
 }
