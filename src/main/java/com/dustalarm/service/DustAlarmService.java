@@ -1,75 +1,84 @@
 package com.dustalarm.service;
 
-import org.springframework.dao.DataAccessException;
 import com.dustalarm.model.*;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.util.Collection;
 
 public interface DustAlarmService {
-    Station findStationById(int id) throws DataAccessException;
+    Station findStationById(int id);
 
-    Station findStationByLocation(Double latitude, Double longitude) throws DataAccessException;
+    Station findStationByLocation(Double latitude, Double longitude);
 
-    Station findStationByName(String name) throws DataAccessException;
+    Station findStationByName(String name);
 
-    Collection<Station> findStationByNameLike(String name) throws DataAccessException;
+    Collection<Station> findStationByNameLike(String name);
 
-    Collection<Station> findStationByAddressLike(String address) throws DataAccessException;
-
-    @Transactional
-    void saveStation(Station station) throws DataAccessException;
-
-    Collection<Station> findAllStations() throws DataAccessException;
-
-    Collection<Station> findAllStations(Integer pageNo) throws DataAccessException;
-
-    User findUserById(int id) throws DataAccessException;
-
-    User findUserByUuid(String uuid) throws DataAccessException;
+    Collection<Station> findStationByAddressLike(String address);
 
     @Transactional
-    void saveUser(User user) throws DataAccessException;
+    void saveStation(Station station);
 
-    Collection<User> findAllUsers() throws DataAccessException;
+    Collection<Station> findAllStations();
 
-    Collection<User> findAllUsers(Integer pageNo) throws DataAccessException;
+    Collection<Station> findAllStations(Integer pageNo);
 
-    Concentration findConcentrationById(int id) throws DataAccessException;
+    Integer findCountStations();
 
-    Concentration findConcentrationByStationId(int stationId) throws DataAccessException;
+    User findUserById(int id);
 
-    @Transactional
-    void saveConcentration(Concentration concentration) throws DataAccessException;
-
-    Collection<Concentration> findAllConcentrations() throws DataAccessException;
-
-    Collection<Concentration> findAllConcentrations(Integer pageNo) throws DataAccessException;
-
-    AlarmConfig findAlarmConfigById(int id) throws DataAccessException;
-
-    Collection<AlarmConfig> findAllAlarmConfigs() throws DataAccessException;
-
-    Collection<AlarmConfig> findAllAlarmConfigs(Integer pageNo) throws DataAccessException;
+    User findUserByUuid(String uuid);
 
     @Transactional
-    void saveAlarmConfig(AlarmConfig alarmConfig) throws DataAccessException;
+    void saveUser(User user);
 
-    Alarm findAlarmById(int id) throws DataAccessException;
+    Collection<User> findAllUsers();
 
-    Collection<Alarm> findAlarmByTimeActivated(String time) throws DataAccessException;
+    Collection<User> findAllUsers(Integer pageNo);
 
-    Collection<Alarm> findAlarmByUserId(int userId) throws DataAccessException;
+    Integer findCountUsers();
 
-    Collection<Alarm> findAllAlarms() throws DataAccessException;
+    Concentration findConcentrationById(int id);
 
-    Collection<Alarm> findAllAlarms(Integer pageNo) throws DataAccessException;
-
-    @Transactional
-    void saveAlarm(Alarm alarm) throws DataAccessException;
-
-    ForecastConcentration findFCByRegionName(String regionName) throws DataAccessException;
+    Concentration findConcentrationByStationId(int stationId);
 
     @Transactional
-    void saveFC(ForecastConcentration fC) throws DataAccessException;
+    void saveConcentration(Concentration concentration);
+
+    Collection<Concentration> findAllConcentrations();
+
+    Collection<Concentration> findAllConcentrations(Integer pageNo);
+
+    Integer findCountConcentrations();
+
+    AlarmConfig findAlarmConfigById(int id);
+
+    Collection<AlarmConfig> findAllAlarmConfigs();
+
+    Collection<AlarmConfig> findAllAlarmConfigs(Integer pageNo);
+
+    @Transactional
+    void saveAlarmConfig(AlarmConfig alarmConfig);
+
+    Integer findCountAlarmConfigs();
+
+    Alarm findAlarmById(int id);
+
+    Collection<Alarm> findAlarmByTimeActivated(String time);
+
+    Collection<Alarm> findAlarmByUserId(int userId);
+
+    Collection<Alarm> findAllAlarms();
+
+    Collection<Alarm> findAllAlarms(Integer pageNo);
+
+    @Transactional
+    void saveAlarm(Alarm alarm);
+
+    Integer findCountAlarms();
+
+    ForecastConcentration findFCByRegionName(String regionName);
+
+    @Transactional
+    void saveFC(ForecastConcentration fC);
 }
